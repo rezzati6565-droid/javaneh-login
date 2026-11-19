@@ -4,7 +4,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="referrer" content="no-referrer">
+  <meta name="referrer" content="origin">
+
   <title>ورود سرگروه | جوانه‌ها</title>
 
   <script src="https://accounts.google.com/gsi/client"
@@ -36,7 +37,9 @@
     }
 
     .logo { font-size: 42px; }
+
     h2 { font-size: 21px; }
+
     p {
       color: #718096;
       font-size: 13px;
@@ -58,78 +61,103 @@
 </head>
 
 <body>
+
   <main class="card">
     <div class="logo">🌱</div>
+
     <h2>ورود به پنل سرگروه جوانه‌ها</h2>
+
     <p>
       برای ادامه، با حساب Google خود وارد شوید.
-      دسترسی به پنل پس از بررسی مجوز شما انجام می‌شود.
+      دسترسی پس از بررسی مجوز شما انجام می‌شود.
     </p>
 
     <div id="googleButton"></div>
-    <div id="message">در حال آماده‌سازی ورود گوگل...</div>
+
+    <div id="message">
+      در حال آماده‌سازی ورود گوگل...
+    </div>
   </main>
 
 <script>
-  // Client ID فعلی خودت را اینجا قرار بده
-  const GOOGLE_CLIENT_ID = 'YOUR_CLIENT_ID.apps.googleusercontent.com';
 
-  const params = new URLSearchParams(location.search);
-  const parentOrigin = params.get('parentOrigin');
+const GOOGLE_CLIENT_ID =
+  'CLIENT_ID_HERE';
 
-  function showMessage(text) {
-    document.getElementById('message').textContent = text;
+function showMessage(text) {
+  document.getElementById('message').textContent = text;
+}
+
+function handleCredential(response) {
+
+  if (!window.opener || window.opener.closed) {
+    showMessage('صفحه اصلی پنل در دسترس نیست.');
+    return;
   }
 
-  function handleCredential(response) {
-    if (!window.opener || window.opener.closed) {
-      showMessage('صفحه اصلی پنل در دسترس نیست. دوباره تلاش کنید.');
-      return;
-    }
+  const parentOrigin =
+    new URLSearchParams(location.search).get('parentOrigin');
 
-    if (!parentOrigin ||
-        !/^https:\/\/[a-zA-Z0-9.-]+$/.test(parentOrigin)) {
-      showMessage('اطلاعات بازگشت معتبر نیست.');
-      return;
-    }
+  let parentUrl;
 
-    showMessage('ورود انجام شد؛ در حال انتقال به پنل...');
-
-    window.opener.postMessage({
-      type: 'JAVANEH_GOOGLE_LOGIN',
-      credential: response.credential
-    }, parentOrigin);
-
-    setTimeout(() => window.close(), 700);
+  try {
+    parentUrl = new URL(parentOrigin);
+  } catch (e) {
+    showMessage('آدرس بازگشت معتبر نیست.');
+    return;
   }
 
-  function initializeGoogle() {
-    if (!window.google?.accounts?.id) {
-      setTimeout(initializeGoogle, 200);
-      return;
-    }
-
-    google.accounts.id.initialize({
-      client_id: GOOGLE_CLIENT_ID,
-      callback: handleCredential,
-      use_fedcm_for_prompt: true
-    });
-
-    google.accounts.id.renderButton(
-      document.getElementById('googleButton'),
-      {
-        theme: 'outline',
-        size: 'large',
-        shape: 'pill',
-        text: 'signin_with',
-        locale: 'fa'
-      }
+  const allowedParent =
+    parentUrl.protocol === 'https:' &&
+    (
+      parentUrl.hostname === 'script.google.com' ||
+      parentUrl.hostname.endsWith('.googleusercontent.com')
     );
 
-    showMessage('برای ورود، دکمه گوگل را انتخاب کنید.');
+  if (!allowedParent) {
+    showMessage('مبدأ صفحه اصلی مجاز نیست.');
+    return;
   }
 
-  initializeGoogle();
+  window.opener.postMessage({
+    type: 'JAVANEH_GOOGLE_LOGIN',
+    credential: response.credential
+  }, parentUrl.origin);
+
+  showMessage('ورود انجام شد؛ در حال بازگشت به پنل...');
+
+  setTimeout(() => window.close(), 700);
+}
+
+function initializeGoogle() {
+
+  if (!window.google?.accounts?.id) {
+    setTimeout(initializeGoogle, 200);
+    return;
+  }
+
+  google.accounts.id.initialize({
+    client_id: GOOGLE_CLIENT_ID,
+    callback: handleCredential
+  });
+
+  google.accounts.id.renderButton(
+    document.getElementById('googleButton'),
+    {
+      theme: 'outline',
+      size: 'large',
+      shape: 'pill',
+      text: 'signin_with',
+      locale: 'fa'
+    }
+  );
+
+  showMessage('برای ورود، دکمه گوگل را انتخاب کنید.');
+}
+
+initializeGoogle();
+
 </script>
+
 </body>
 </html>
