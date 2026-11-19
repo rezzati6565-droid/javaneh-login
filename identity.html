@@ -1,0 +1,135 @@
+
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>ورود سرگروه | جوانه‌ها</title>
+
+  <script src="https://accounts.google.com/gsi/client"
+          async defer></script>
+
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;700;800&display=swap"
+        rel="stylesheet">
+
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      background: #f3f6fb;
+      font-family: Vazirmatn, Tahoma, sans-serif;
+      color: #18243a;
+    }
+
+    .card {
+      background: white;
+      width: min(430px, 92%);
+      padding: 36px 25px;
+      border-radius: 22px;
+      text-align: center;
+      box-shadow: 0 12px 40px #20345a12;
+    }
+
+    .logo { font-size: 42px; }
+    h2 { font-size: 21px; }
+    p {
+      color: #718096;
+      font-size: 13px;
+      line-height: 2;
+    }
+
+    #googleButton {
+      display: flex;
+      justify-content: center;
+      margin-top: 25px;
+    }
+
+    #message {
+      margin-top: 18px;
+      font-size: 13px;
+      color: #3157c8;
+    }
+  </style>
+</head>
+
+<body>
+  <main class="card">
+    <div class="logo">🌱</div>
+    <h2>ورود به پنل سرگروه جوانه‌ها</h2>
+    <p>
+      برای ادامه، با حساب Google خود وارد شوید.
+      دسترسی به پنل پس از بررسی مجوز شما انجام می‌شود.
+    </p>
+
+    <div id="googleButton"></div>
+    <div id="message">در حال آماده‌سازی ورود گوگل...</div>
+  </main>
+
+<script>
+  // Client ID فعلی خودت را اینجا قرار بده
+  const GOOGLE_CLIENT_ID = 'YOUR_CLIENT_ID.apps.googleusercontent.com';
+
+  const params = new URLSearchParams(location.search);
+  const parentOrigin = params.get('parentOrigin');
+
+  function showMessage(text) {
+    document.getElementById('message').textContent = text;
+  }
+
+  function handleCredential(response) {
+    if (!window.opener || window.opener.closed) {
+      showMessage('صفحه اصلی پنل در دسترس نیست. دوباره تلاش کنید.');
+      return;
+    }
+
+    if (!parentOrigin ||
+        !/^https:\/\/[a-zA-Z0-9.-]+$/.test(parentOrigin)) {
+      showMessage('اطلاعات بازگشت معتبر نیست.');
+      return;
+    }
+
+    showMessage('ورود انجام شد؛ در حال انتقال به پنل...');
+
+    window.opener.postMessage({
+      type: 'JAVANEH_GOOGLE_LOGIN',
+      credential: response.credential
+    }, parentOrigin);
+
+    setTimeout(() => window.close(), 700);
+  }
+
+  function initializeGoogle() {
+    if (!window.google?.accounts?.id) {
+      setTimeout(initializeGoogle, 200);
+      return;
+    }
+
+    google.accounts.id.initialize({
+      client_id: GOOGLE_CLIENT_ID,
+      callback: handleCredential,
+      use_fedcm_for_prompt: true
+    });
+
+    google.accounts.id.renderButton(
+      document.getElementById('googleButton'),
+      {
+        theme: 'outline',
+        size: 'large',
+        shape: 'pill',
+        text: 'signin_with',
+        locale: 'fa'
+      }
+    );
+
+    showMessage('برای ورود، دکمه گوگل را انتخاب کنید.');
+  }
+
+  initializeGoogle();
+</script>
+</body>
+</html>
